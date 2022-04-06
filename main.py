@@ -37,6 +37,7 @@ def calc_seam_cost_forward(energy_map):
 def calc_img_energy(image):
     image = image.astype('float32')
     energy = np.absolute(cv2.Sobel(image, -1, 1, 0)) + np.absolute(cv2.Sobel(image, -1, 0, 1))
+    print("ENERGY:", energy)
     energy_map = np.sum(energy, axis=2)
     return energy_map
 
@@ -48,23 +49,33 @@ def rgbToGrey(arr):
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
 
-fig5 = cv2.imread('./clock.jpeg', cv2.IMREAD_COLOR)
+def rgb2gray2(rgb):
+    return np.dot(rgb[...,:3], [0.3, 0.59, 0.11])
+
+fig5 = cv2.imread('./images/clocks.jpeg', cv2.IMREAD_COLOR)
 # rgb_fig5 = cv2.cvtColor(fig5, cv2.COLOR_BGR2RGB)
 
 # imgColor = Image.open('./fig5.png')
 # img = Image.open('./fig5.png').convert('L')
 # data = np.asarray( img, dtype="int32" )
 # dataColor = np.asarray(imgColor,dtype="int32")
-
-energy_map = calc_img_energy(fig5)
-
-dataGrey = rgb2gray(fig5)
 print(fig5)
-print(energy_map)
+print("++++")
+dataGrey = rgb2gray(fig5)
 print(dataGrey)
+energy_map = calc_img_energy(fig5)
+print(energy_map)
+
+
+# print(fig5)
+# print(energy_map)
+# print(dataGrey)
 
 # energy_map_forward, backtrack = calc_seam_cost_forward(energy_map)
 a = plt.imshow(energy_map)
-print(a)
+cv2.imwrite("test3.png", dataGrey)
 print("Figure 5 Shape: %s" % (dataGrey.shape,))
+print(energy_map.max())
+print(energy_map.min())
+
 plt.show()

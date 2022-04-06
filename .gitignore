@@ -3,3 +3,11 @@ __pycache__/
 
 # Training agents output
 .out/
+agents-out-v2/
+tensorboard-out-v2/
+images-out/
+new/.out/
+new/.tensorboard/
+
+*.png
+*.jpeg

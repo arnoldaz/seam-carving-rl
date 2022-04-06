@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-from sklearn.preprocessing import normalize
 import sys 
 
 class SeamCarvingEnv(gym.Env):
@@ -15,6 +14,8 @@ class SeamCarvingEnv(gym.Env):
         self.img = cv2.resize(self.img, (160, 120), interpolation=cv2.INTER_AREA)
         self.img_energy = self.calculate_img_energy(self.img)
         self.img_energy = cv2.resize(self.img_energy, (160, 120), interpolation=cv2.INTER_AREA)
+
+        self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
 
         self.render_img = self.img[:]
         self.render_img_object = None
@@ -83,6 +84,7 @@ class SeamCarvingEnv(gym.Env):
         #     print("_++++++++++++++++++++")
         #     print(final_obs)
         #     self.test += 1
+        # print(final_obs)
 
         return final_obs
         # return final_obs / 255 # normalize
@@ -125,6 +127,7 @@ class SeamCarvingEnv(gym.Env):
         reward = 0.0
         self.current_line += 1
         
+        # print(action)
         # (-1, 0, 1)
         action -= 1
 
@@ -135,6 +138,7 @@ class SeamCarvingEnv(gym.Env):
             self.current_location = self.line_length - 1
 
         reward -= self.img_energy[self.current_line][self.current_location]
+        # print(reward)
         # reward = self.normalize_reward(reward)
 
         # reward = self.normalize_reward(-reward)
