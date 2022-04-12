@@ -40,7 +40,9 @@ class SeamCarvingEnv(gym.Env):
         # observation_space = spaces.Box(low=0, high=255, shape=(HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
 
         self.obs_width = 159
+        # self.observation_space = spaces.Box(low=0, high=1500, shape=(self.line_count, self.line_length), dtype=np.int)
         self.observation_space = spaces.Box(low=0, high=255, shape=(self.line_count, self.obs_width, 3), dtype=np.uint8)
+        self.observation = self.img_energy[:]
 
         # =======================
         # 3 next lines of data + first line of location
@@ -65,6 +67,9 @@ class SeamCarvingEnv(gym.Env):
         return True if self.current_line >= self.line_count - 1 else False
 
     def get_observations(self):
+
+        # return self.observation
+
         low = self.current_location - self.obs_width // 2
         high = self.current_location + self.obs_width // 2 + 1
 
@@ -79,6 +84,10 @@ class SeamCarvingEnv(gym.Env):
         final_obs = np.full((self.line_count, self.obs_width, 3), 255, dtype=np.int)
         final_obs[:lines_data.shape[0], x_offset:lines_data.shape[1] + x_offset] = lines_data
 
+        # print(final_obs.shape)
+
+        return final_obs
+
         # if self.test == 0:
         #     np.set_printoptions(threshold=sys.maxsize)
         #     print("_++++++++++++++++++++")
@@ -86,7 +95,6 @@ class SeamCarvingEnv(gym.Env):
         #     self.test += 1
         # print(final_obs)
 
-        return final_obs
         # return final_obs / 255 # normalize
 
         # =======================
@@ -137,7 +145,7 @@ class SeamCarvingEnv(gym.Env):
         if self.current_location > self.line_length - 1:
             self.current_location = self.line_length - 1
 
-        reward -= self.img_energy[self.current_line][self.current_location]
+        reward += max(self.img_energy[self.current_line][self.current_location] + 1500, 0)
         # print(reward)
         # reward = self.normalize_reward(reward)
 
@@ -148,6 +156,7 @@ class SeamCarvingEnv(gym.Env):
 
         self.found_path[self.current_line] = self.current_location
         self.render_img[self.current_line][self.current_location] = self.line_color
+        # self.observation[self.current_line][self.current_location] = 0
 
         return self.get_observations(), reward, self.is_done(), {}
 

@@ -1,7 +1,7 @@
 import sys
 import gym
 import numpy as np
-from env import SeamCarvingEnv
+from clean.env import SeamCarvingEnv
 import matplotlib.pyplot as plt
 
 from stable_baselines.common.policies import MlpPolicy, CnnPolicy
@@ -19,7 +19,7 @@ EVALUATE_DIR = "evaluation-out"
 SAVE_DIR = "agents-out-v2"
 TENSORBOARD_DIR = "tensorboard-out-v2"
 STEPS = 2e7
-SAVE_PERIOD = 500000
+SAVE_PERIOD = 250000
 
 
 def get_tensorboard_dir(env_name: str):
@@ -35,8 +35,8 @@ def get_agent_dir(env_name: str, i: int):
     return full_dir
 
 
-env = SeamCarvingEnv("./images/clocks.jpeg")
-env = make_vec_env(lambda: env, n_envs=3)
+env = SeamCarvingEnv("./images/clocks-fix.jpeg")
+# env = make_vec_env(lambda: env, n_envs=3)
 
 # kwargs = { "img_path": "./images/clocks.jpeg" }
 # env = make_vec_env(SeamCarvingEnv, n_envs=4, env_kwargs=kwargs)
@@ -50,7 +50,7 @@ env = make_vec_env(lambda: env, n_envs=3)
 # env = BitFlippingEnv(continuous=False, max_steps=600)
 
 
-model = ACER(CnnPolicy, env, verbose=1, tensorboard_log=get_tensorboard_dir(RANDOM_GUID), full_tensorboard_log=False)
+model = PPO2(CnnPolicy, env, verbose=1, tensorboard_log=get_tensorboard_dir(RANDOM_GUID), full_tensorboard_log=False)
 
 for i in range(int(STEPS / SAVE_PERIOD)):
     model.learn(total_timesteps=int(SAVE_PERIOD), reset_num_timesteps=False)

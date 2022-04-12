@@ -1,7 +1,7 @@
 import sys
 import gym
 import numpy as np
-from env import SeamCarvingEnv
+
 import matplotlib.pyplot as plt
 
 from stable_baselines3 import DDPG, DQN, PPO, SAC
@@ -10,6 +10,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 import uuid
 import os
+
+from clean.env import SeamCarvingEnv
 
 RANDOM_GUID = str(uuid.uuid4())[:8]
 
