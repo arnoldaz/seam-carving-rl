@@ -22,8 +22,6 @@ class SeamCarvingEnv(gym.Env):
     HEIGHT = 120
 
     def __init__(self, image_path: str):
-        print("CORRECT ENVIRONMENT")
-
         original_image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         scaled_image = cv2.resize(original_image, (self.WIDTH, self.HEIGHT), interpolation=cv2.INTER_AREA)
         self.image = cv2.cvtColor(scaled_image, cv2.COLOR_BGR2RGB)
@@ -38,7 +36,7 @@ class SeamCarvingEnv(gym.Env):
         self.path_line_color = [255, 255, 255] # White
 
         self.current_line = 0
-        self.current_location = random.randint(int((self.WIDTH - 1) * 0.2), int((self.WIDTH - 1) * 0.8))
+        self.current_location = random.randint(0, self.WIDTH - 1)
 
         self.found_path = np.full(self.HEIGHT, -1, dtype=int)
         self.found_path[0] = self.current_location
@@ -63,14 +61,14 @@ class SeamCarvingEnv(gym.Env):
         """Cuts out original image size observation from observation image."""
         start_x = self.WIDTH + self.current_location
         end_x = start_x + self.WIDTH
-        start_y = self.HEIGHT + self.current_line
+        start_y = self.current_line
         end_y = start_y + self.HEIGHT
-        
+    
         return self.observation_image[start_y:end_y, start_x:end_x]
 
     def normalize_energy_value(self, energy_value: int) -> int:
-        """Inverse and normalize reward"""
-        return (self.energy_max - energy_value) / (self.energy_max - self.energy_min)
+        """Normalize energy value"""
+        return 1 - ((self.energy_max - energy_value) / (self.energy_max - self.energy_min))
 
     def step(self, action):
         reward = 0.0
@@ -114,7 +112,7 @@ class SeamCarvingEnv(gym.Env):
 
     def reset(self):
         self.current_line = 0
-        self.current_location = random.randint(int((self.WIDTH - 1) * 0.2), int((self.WIDTH - 1) * 0.8))
+        self.current_location = random.randint(0, self.WIDTH - 1)
 
         self.found_path = np.full(self.HEIGHT, -1, dtype=int)
         self.found_path[0] = self.current_location
