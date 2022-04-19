@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import argparse
 
 def rgb_to_gray(rgb):
     return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
@@ -33,18 +32,6 @@ def find_min_seam(energy_map_forward, backtrack):
     shape = m, n = energy_map_forward.shape
     seam = np.zeros(m, dtype=int)
     idx = np.argmin(energy_map_forward[-1])
-    cost = energy_map_forward[-1][idx]
-    seam[-1] = idx
-    for i in range(m - 2, -1, -1):
-        idx = backtrack[i + 1, idx]
-        seam[i] = idx
-    return seam, cost
-
-def find_index_seam(energy_map_forward, backtrack, start_location):
-    """Finds seam from given starting location."""
-    shape = m, n = energy_map_forward.shape
-    seam = np.zeros(m, dtype=int)
-    idx = start_location
     cost = energy_map_forward[-1][idx]
     seam[-1] = idx
     for i in range(m - 2, -1, -1):
@@ -128,77 +115,25 @@ def calc_seam_cost_forward(energy_map):
                 backtrack[i, j] = j + min_idx - 1
     return (e_map, backtrack)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Input image path")
-parser.add_argument("-o", "--output", type=str, default="D:\\Source\\seam-carving\\images-out\\clocks-test5.png", help="Output image path")
-parser.add_argument("-l", "--location", type=int, default=80, help="Starting location for seam")
+def main():
+    og_img = cv2.imread("../images/clocks-fix.jpeg", cv2.IMREAD_COLOR)
+    out_path = "../images-out/clocks-fix2.png"
 
-def get_image_with_seam(image_path, start_seam_location):
-    """Reads image and draws minimum seam from given starting location."""
-    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    img = np.copy(og_img)
+    # og_energy_map = calc_img_energy(img)
+    # print(og_energy_map.max())
+    # print(og_energy_map.min())
+
     img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
-
-    # Search is from the bottom, so need to rotate
-    img = cv2.rotate(img, cv2.ROTATE_180)
-
-    # Calculate seam normally with inverted image
     energy_map = calc_img_energy(img)
-    energy_map_forward, backtrack = calc_seam_cost_forward(energy_map)
-    min_seam, cost = find_index_seam(energy_map_forward, backtrack, start_seam_location)
-    image_with_seam = draw_seam(img, min_seam)
 
-    # Rotate back to original rotation
-    image_with_seam = cv2.rotate(image_with_seam, cv2.ROTATE_180)
+    min_e = energy_map.min()
+    max_e = energy_map.max()
 
-    return image_with_seam
+    print(min_e, max_e)
 
-def main(args: argparse.Namespace):
-    """Main function for testing seam calculation."""
-    out_path = args.output
-    image_with_seam = get_image_with_seam(args.input, args.location)
-
-    cv2.imwrite(out_path, image_with_seam)
-    return
-
-    test = np.interp(energy_map, (energy_map.min(), energy_map.max()), (0, 255))
-    print(test.min())
-    print(test.max())
-    print(test)
-    cv2.imwrite("D:\\Source\\seam-carving\\images-out\\clocks-test6.png", test)
-    # energy_map = np.array([
-    #     [1, 2, 3],
-    #     [5, 6, 7]
-    # ])
-
-    columns = np.sum(energy_map, axis=0)
-    lines = np.sum(energy_map, axis=1)
-
-    columns = np.reshape(columns, (1, 160))
-    lines = np.reshape(lines, (120, 1))
-
-    columns = columns / 160
-    lines = lines / 120
-
-    # column = np.reshape(column, (120, 1))
-    # lines = np.reshape(lines, (1, 160))
-
-    # print(columns)
-    # print(lines)    
-
-    # column = np.swapaxes(column, 0, 1)
-
-    final = np.matmul(lines, columns)
-    print(final.min())
-    print(final.max())
-    final = np.interp(final, (final.min(), final.max()), (0, 255))
-    # print(final)
-    # energy_map[energy_map < (3000/100*50)] = 0
-    # cArray1 = cv2.CreateMat(120, 160, cv2.CV_32FC3)
-    # cArray2 = cv2.fromarray(final)
-    # cv2.CvtColor(cArray2, cArray1, cv2.CV_GRAY2BGR)
-    # cv2.imwrite("cpImage.bmp", cArray1)
-
-    cv2.imwrite(out_path, final)
+    energy_map[energy_map < (3000/100*50)] = 0
+    cv2.imwrite(out_path, energy_map)
     return
 
     # energy_map = cv2.resize(energy_map, (160, 120), interpolation=cv2.INTER_AREA)
@@ -211,5 +146,4 @@ def main(args: argparse.Namespace):
     img = remove_seam(img, min_seam)
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+   main()

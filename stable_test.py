@@ -1,5 +1,5 @@
 import gym
-from new.env import SeamCarvingEnv
+from clean.environment import SeamCarvingEnv
 import matplotlib.pyplot as plt
 
 from stable_baselines.common.policies import MlpPolicy
@@ -16,7 +16,7 @@ env = make_vec_env(lambda: env, n_envs=1)
 # check_env(env)
 
 # model = DQN(MlpPolicy, env, verbose=1)
-model = PPO2.load(f"agents-out-v2\\64a98684_20000000.0_41", env)
+model = PPO2.load(f"agents-out-v2\\40e8f00c_20000000.0_44", env)
 
 obs = env.reset()
 # env.current_location = 130
@@ -24,11 +24,11 @@ done = False
 i = 0
 
 while not done:
-    action, _states = model.predict(obs, deterministic=False)
+    action, _states = model.predict(obs)
     obs, reward, done, info = env.step(action)
     # env.render()
 
-image = env.envs[0].render_img
+image = env.envs[0].render_image
 plt.imshow(image)
 plt.show()
 

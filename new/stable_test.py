@@ -1,5 +1,5 @@
 import gym
-from env import SeamCarvingEnv
+from clean.environment import SeamCarvingEnv
 import matplotlib.pyplot as plt
 
 from stable_baselines3 import DQN, PPO

@@ -1,11 +1,11 @@
 import sys
 import gym
 import numpy as np
-from clean.env import SeamCarvingEnv
+from clean.environment import SeamCarvingEnv
 import matplotlib.pyplot as plt
 
 from stable_baselines.common.policies import MlpPolicy, CnnPolicy
-from stable_baselines import ACER, DQN, PPO2, SAC, HER
+from stable_baselines import ACER, DQN, PPO1, PPO2, SAC, HER
 from stable_baselines.deepq.policies import MlpPolicy as DqnMlpPolicy
 from stable_baselines.common import make_vec_env
 from stable_baselines.common.bit_flipping_env import BitFlippingEnv
@@ -50,7 +50,7 @@ env = SeamCarvingEnv("./images/clocks-fix.jpeg")
 # env = BitFlippingEnv(continuous=False, max_steps=600)
 
 
-model = PPO2(CnnPolicy, env, verbose=1, tensorboard_log=get_tensorboard_dir(RANDOM_GUID), full_tensorboard_log=False)
+model = DQN(CnnPolicy, env, verbose=1, tensorboard_log=get_tensorboard_dir(RANDOM_GUID), full_tensorboard_log=False)
 
 for i in range(int(STEPS / SAVE_PERIOD)):
     model.learn(total_timesteps=int(SAVE_PERIOD), reset_num_timesteps=False)

@@ -11,3 +11,6 @@ new/.tensorboard/
 
 *.png
 *.jpeg
+
+*.agents
+*.tensorboard

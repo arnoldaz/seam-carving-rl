@@ -11,7 +11,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 import uuid
 import os
 
-from clean.env import SeamCarvingEnv
+from clean.environment import SeamCarvingEnv
 
 RANDOM_GUID = str(uuid.uuid4())[:8]
 
