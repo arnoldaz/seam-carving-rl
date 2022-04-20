@@ -5,6 +5,7 @@ from pathlib import Path
 from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+from versioning import get_ppo
 
 from environment import SeamCarvingEnv
 
@@ -17,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--algorithm", type=str, default="PPO", help="Chosen algorithm")
 parser.add_argument("-s", "--steps", type=int, default=int(1e7), help="Training steps amount")
 parser.add_argument("-p", "--period", type=int, default=int(2e5), help="Save period amount")
-parser.add_argument("-n", "--n_env", type=int, default=16, help="Default n_env count")
+parser.add_argument("-n", "--n_env", type=int, default=4, help="Default n_env count")
 parser.add_argument("-i", "--image", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Environment image path")
 parser.add_argument("-v", "--vec_env", action=argparse.BooleanOptionalAction, default=False, help="Use SubprocVecEnv")
 
@@ -37,7 +38,7 @@ def create_model(algorithm_name, image_path, n_envs, vec_env):
 
     match algorithm_name:
         case "PPO":
-            model = PPO("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1)
+            model = get_ppo()("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1)
         case "A2C":
             model = A2C("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1)
         case "DQN":
@@ -58,6 +59,8 @@ def train_model(model: PPO | A2C | DQN, steps, save_period):
     model.save(get_agent_dir("FINAL"))
 
 def main(args: argparse.Namespace):
+    print(f"Passed params: {args.algorithm=} {args.image=} {args.n_env=} {args.vec_env=} {args.steps=} {args.period=}")
+
     model = create_model(args.algorithm, args.image, args.n_env, args.vec_env)
     train_model(model, args.steps, args.period)
     return

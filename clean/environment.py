@@ -44,14 +44,14 @@ class SeamCarvingEnv(gym.Env):
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(low=0, high=255, shape=(3, self.HEIGHT, self.WIDTH), dtype=np.uint8)
 
-        normalized_energy = np.interp(self.image_energy, (self.image_energy.min(), self.image_energy.max()), (0, 255))
-        self.observation_image_full = self.modify_image_for_observations(normalized_energy)
+        self.normalized_energy = np.interp(self.image_energy, (self.image_energy.min(), self.image_energy.max()), (0, 255))
+        self.observation_image_full = self.fill_image_for_observations(self.normalized_energy)
 
-        normalized_energy_50 = np.where(normalized_energy < 50, 0, 255)
-        self.observation_image_50 = self.modify_image_for_observations(normalized_energy_50)
+        self.normalized_energy_50 = np.where(self.normalized_energy < 50, 0, 255)
+        self.observation_image_50 = self.fill_image_for_observations(self.normalized_energy_50)
 
-        normalized_energy_100 = np.where(normalized_energy < 100, 0, 255)
-        self.observation_image_100 = self.modify_image_for_observations(normalized_energy_100)
+        self.normalized_energy_100 = np.where(self.normalized_energy < 100, 0, 255)
+        self.observation_image_100 = self.fill_image_for_observations(self.normalized_energy_100)
 
     def modify_image_for_observations(self, image):
         """Returns 3x2 matrix of original image with clone images flipped."""
@@ -63,6 +63,15 @@ class SeamCarvingEnv(gym.Env):
         image_layer_2 = np.concatenate((image_flipped_both, image_flipped_vertical, image_flipped_both), axis=1)
 
         return np.concatenate((image_layer_1, image_layer_2), axis=0)
+
+    def fill_image_for_observations(self, image):
+        image_flipped_vertical = cv2.flip(image, 0)
+        image_layer_vertical = np.concatenate((image, image_flipped_vertical), axis=0)
+
+        empty_matrix = np.full((self.HEIGHT * 2, self.WIDTH * 3), 255)
+        empty_matrix[0:(self.HEIGHT * 2), self.WIDTH:(self.WIDTH * 2)] = image_layer_vertical
+
+        return empty_matrix
 
     def is_done(self):
         """Returns true if episode is done."""
@@ -116,6 +125,14 @@ class SeamCarvingEnv(gym.Env):
             normalized_energy = 100 - np.interp(energy_value, (self.image_energy.min(), self.image_energy.max()), (0, 100))
             reward += normalized_energy
 
+            energy_value_50 = self.normalized_energy_50[self.current_line][self.current_location]
+            if energy_value_50 == 255:
+                reward -= 30
+
+            energy_value_100 = self.normalized_energy_100[self.current_line][self.current_location]
+            if energy_value_100 == 255:
+                reward -= 50
+            
         self.found_path[self.current_line] = self.current_location
         self.render_image[self.current_line][self.current_location] = self.path_line_color
 
@@ -139,9 +156,9 @@ class SeamCarvingEnv(gym.Env):
             raise NotImplementedError("Only human rendering is available")
 
         if not self.render_initialized:
-            self.render_image_object = plt.imshow(self.render_image)
+            self.render_image_object = plt.imshow(self.get_observations()[0])
         else:
-            self.render_image_object.set_data(self.render_image)
+            self.render_image_object.set_data(self.get_observations()[0])
 
         plt.pause(0.01)
 
