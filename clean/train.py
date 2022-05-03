@@ -1,6 +1,7 @@
 import argparse
 import uuid
 from pathlib import Path
+import time
 
 from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -38,7 +39,7 @@ def create_model(algorithm_name, image_path, n_envs, vec_env):
 
     match algorithm_name:
         case "PPO":
-            model = get_ppo()("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1)
+            model = PPO("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1, batch_size=256, n_steps=512)
         case "A2C":
             model = A2C("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1)
         case "DQN":
@@ -49,13 +50,15 @@ def create_model(algorithm_name, image_path, n_envs, vec_env):
     return model
 
 def train_model(model: PPO | A2C | DQN, steps, save_period):
+    start = time.process_time()
     for i in range(int(steps / save_period)):
         model.learn(total_timesteps=int(save_period), reset_num_timesteps=False)
         model.save(get_agent_dir(i))
 
         current_steps = (i + 1) * save_period
-        print("Saved {}".format(current_steps))
+        print("Saved {} {}".format(current_steps, time.process_time() - start))
 
+    print(f"oh no {time.process_time() - start}")
     model.save(get_agent_dir("FINAL"))
 
 def main(args: argparse.Namespace):

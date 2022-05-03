@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import argparse
+import random
 
 def rgb_to_gray(rgb):
     return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
@@ -128,16 +129,8 @@ def calc_seam_cost_forward(energy_map):
                 backtrack[i, j] = j + min_idx - 1
     return (e_map, backtrack)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Input image path")
-parser.add_argument("-o", "--output", type=str, default="D:\\Source\\seam-carving\\images-out\\clocks-test5.png", help="Output image path")
-parser.add_argument("-l", "--location", type=int, default=80, help="Starting location for seam")
-
-def get_image_with_seam(image_path, start_seam_location):
+def get_image_with_seam(img: cv2.Mat, start_seam_location: int) -> cv2.Mat:
     """Reads image and draws minimum seam from given starting location."""
-    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
-
     # Search is from the bottom, so need to rotate
     img = cv2.rotate(img, cv2.ROTATE_180)
 
@@ -152,12 +145,95 @@ def get_image_with_seam(image_path, start_seam_location):
 
     return image_with_seam
 
+def get_random_starting_points(width: int, point_count: int, seed: int = None) -> list[int]:
+    """Generates random starting point array assuming that next point has 1 less width (line was seam carved)."""
+    final_points = []
+    current_width = width
+    current_point_count = point_count
+
+    random.seed(seed)
+
+    while current_point_count > 0:
+        rand_int = random.randint(0, current_width - 1)
+        final_points.append(rand_int)
+
+        current_width -= 1
+        current_point_count -= 1
+
+    return final_points
+
+def seam_carve_image_from_points(img: cv2.Mat, start_seam_locations: list[int]) -> cv2.Mat:
+    """Seam carve image using given list of starting locations."""
+    # Search is from the bottom, so need to rotate
+    img = cv2.rotate(img, cv2.ROTATE_180)
+
+    i = 0
+    for start_seam_location in start_seam_locations:
+        energy_map = calc_img_energy(img)
+        energy_map_forward, backtrack = calc_seam_cost_forward(energy_map)
+        min_seam, cost = find_index_seam(energy_map_forward, backtrack, start_seam_location)
+        print(f"{min_seam=}")
+        image_without_seam = remove_seam(img, min_seam)
+
+        cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp\\clocks-middle-{i}.png", cv2.rotate(image_without_seam, cv2.ROTATE_180))
+        i += 1
+
+        img = image_without_seam
+
+    # Rotate back to original rotation
+    img = cv2.rotate(img, cv2.ROTATE_180)
+    
+    return img
+
+def add_empty_vertical_lines(img: cv2.Mat, line_count: int) -> cv2.Mat:
+    heigth, width, rgb = img.shape
+    empty_lines = np.full((heigth, line_count, 3), 255, dtype=int)
+
+    new_img = np.concatenate((img, empty_lines), axis=1)
+    # print(f"{new_img.shape=}")
+    
+    return new_img
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Input image path")
+parser.add_argument("-o", "--output", type=str, default="D:\\Source\\seam-carving\\images-out\\2.png", help="Output image path")
+parser.add_argument("-l", "--location", type=int, default=80, help="Starting location for seam")
+
 def main(args: argparse.Namespace):
     """Main function for testing seam calculation."""
     out_path = args.output
-    image_with_seam = get_image_with_seam(args.input, args.location)
+    img = cv2.imread(args.input, cv2.IMREAD_COLOR)
 
-    cv2.imwrite(out_path, image_with_seam)
+    a = calc_img_energy(img)
+    a_r = cv2.resize(a, (160, 120), interpolation=cv2.INTER_AREA)
+    a_n = np.interp(a_r, (a_r.min(), a_r.max()), (0, 255))
+
+    img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
+    b = calc_img_energy(img)
+    b_n = np.interp(b, (b.min(), b.max()), (0, 255))
+
+    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\a.png", a)
+    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\ar.png", a_r)
+    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\b.png", b)
+    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\an.png", a_n)
+    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\bn.png", b_n)
+
+    return
+
+    # out_image = cv2.cvtColor(np.float32(img), cv2.COLOR_BGR2RGB)
+    # cv2.imwrite(f"D:\\Source\\seam-carving\\images\\clocks-scaled.png", img)
+    # return 
+
+    
+    # test_img = add_empty_vertical_lines(img, 5)
+    # cv2.imwrite("D:\\Source\\seam-carving\\images-out\\4.png", test_img)
+    # return
+
+    start_seam_locations = get_random_starting_points(160, 30, 123)
+    print(f"{start_seam_locations=}")
+    end_image = seam_carve_image_from_points(img, start_seam_locations)
+
+    cv2.imwrite(out_path, end_image)
     return
 
     test = np.interp(energy_map, (energy_map.min(), energy_map.max()), (0, 255))

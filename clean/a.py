@@ -1,3 +1,4 @@
+import sys
 import cv2
 import gym
 
@@ -10,17 +11,16 @@ env = SeamCarvingEnv("../images/clocks-fix.jpeg")
 obs = env.reset()
 done = False
 
-env.current_location = 120
-i = 0
+env.current_location = 10
+
+# model = PPO.load("72af20d4_16")
 
 while not done:
+    # action, _states = model.predict(obs, deterministic=False)
     action = env.action_space.sample()
     obs, rewards, done, info = env.step(action)
-    # env.render()
+    env.render()
     print(rewards)
-    i += 1
-    if i == 50:
-        cv2.imwrite("../images-out/clocks-env-test4.png", env.get_observations()[0])
 
 
-cv2.imwrite("../images-out/clocks-env-test5.png", env.render_image)
+cv2.imwrite("../images-out/ONE_LINE2.png", env.render_image)
