@@ -30,7 +30,7 @@ class SeamCarvingEnv(gym.Env):
             self.image = image
 
         self.scaled_image = cv2.resize(self.image, (self.OBSERVATION_WIDTH, self.OBSERVATION_HEIGHT), interpolation=cv2.INTER_AREA)
-        self.image_width, self.image_height, _ = self.image.shape
+        self.image_height, self.image_width, _ = self.image.shape
         self.ratio_vertical = self.image_height / self.OBSERVATION_HEIGHT
         self.ratio_horizontal = self.image_width / self.OBSERVATION_WIDTH
         
@@ -51,7 +51,7 @@ class SeamCarvingEnv(gym.Env):
         self.path_line_color = [255, 255, 255] # White
 
         self.current_line = 0
-        self.current_location = random.randint(0, self.image_width - 1)
+        self.current_location = random.randint(0, self.image_width - 2)
 
         self.found_path = np.full(self.image_height, -1, dtype=int)
         self.found_path[0] = self.current_location
@@ -59,14 +59,17 @@ class SeamCarvingEnv(gym.Env):
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(low=0, high=255, shape=(3, self.OBSERVATION_HEIGHT, self.OBSERVATION_WIDTH), dtype=np.uint8)
 
-        self.normalized_energy = np.interp(self.scaled_image_energy, (self.scaled_image_energy.min(), self.scaled_image_energy.max()), (0, 255))
-        self.observation_image_full = self.fill_image_for_observations(self.normalized_energy)
+        self.normalized_energy = np.interp(self.image_energy, (self.image_energy.min(), self.image_energy.max()), (0, 255))
+        self.normalized_scaled_energy = np.interp(self.scaled_image_energy, (self.scaled_image_energy.min(), self.scaled_image_energy.max()), (0, 255))
+        self.observation_image_full = self.fill_image_for_observations(self.normalized_scaled_energy)
 
         self.normalized_energy_50 = np.where(self.normalized_energy < 50, 0, 255)
-        self.observation_image_50 = self.fill_image_for_observations(self.normalized_energy_50)
+        self.normalized_scaled_energy_50 = np.where(self.normalized_scaled_energy < 50, 0, 255)
+        self.observation_image_50 = self.fill_image_for_observations(self.normalized_scaled_energy_50)
 
         self.normalized_energy_100 = np.where(self.normalized_energy < 100, 0, 255)
-        self.observation_image_100 = self.fill_image_for_observations(self.normalized_energy_100)
+        self.normalized_scaled_energy_100 = np.where(self.normalized_scaled_energy < 100, 0, 255)
+        self.observation_image_100 = self.fill_image_for_observations(self.normalized_scaled_energy_100)
 
         # self.observation_energy_forward = self.fill_image_for_observations(self.image_energy_forward_interp)
 
@@ -92,6 +95,7 @@ class SeamCarvingEnv(gym.Env):
 
     def is_done(self):
         """Returns true if episode is done."""
+        # print(f"{self.current_line=} {self.image_height=}")
         return self.current_line >= self.image_height - 1
 
     def get_observations_for_image(self, image):
@@ -160,7 +164,7 @@ class SeamCarvingEnv(gym.Env):
 
     def reset(self):
         self.current_line = 0
-        self.current_location = random.randint(0, self.image_width - 1)
+        self.current_location = random.randint(0, self.image_width - 2)
 
         self.found_path = np.full(self.image_height, -1, dtype=int)
         self.found_path[0] = self.current_location

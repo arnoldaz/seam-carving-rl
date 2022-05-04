@@ -39,7 +39,7 @@ def create_model(algorithm_name, image_path, n_envs, vec_env):
 
     match algorithm_name:
         case "PPO":
-            model = PPO("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1, batch_size=256, n_steps=512)
+            model = PPO("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1, batch_size=256, n_steps=1024)
         case "A2C":
             model = A2C("MlpPolicy", env, tensorboard_log=get_tensorboard_dir(), verbose=1)
         case "DQN":

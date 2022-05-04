@@ -19,14 +19,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Input image path")
 parser.add_argument("-r", "--rl-output", type=str, default="D:\\Source\\seam-carving\\images-out\\rl1.png", help="Output image path")
 parser.add_argument("-s", "--seam-carving-output", type=str, default="D:\\Source\\seam-carving\\images-out\\seamcarving1.png", help="Output image path")
-parser.add_argument("-m", "--model", type=str, default="dfea11e4_8", help="PPO model path")
+parser.add_argument("-m", "--model", type=str, default="0459574b_FINAL", help="PPO model path")
 
 def main(args: argparse.Namespace):
     """Testing stuff"""
 
     env = SeamCarvingEnv(args.input)
     obs = env.reset()
-    start_seam_locations = get_random_starting_points(env.WIDTH, 30, 123)
+    start_seam_locations = get_random_starting_points(env.image_width, 30, 123)
     done = False
 
     model = PPO.load(args.model)
@@ -52,7 +52,7 @@ def main(args: argparse.Namespace):
         final_image = add_empty_vertical_lines(new_image, 1)
 
         out_image = cv2.cvtColor(np.float32(final_image), cv2.COLOR_BGR2RGB)
-        cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp1\\abc_{i}.png", out_image)
+        cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp1\\abc1_{i}.png", out_image)
 
         i += 1
         env = SeamCarvingEnv(final_image, block_right_lines=i)
