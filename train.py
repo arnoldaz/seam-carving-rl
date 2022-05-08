@@ -6,7 +6,7 @@ import time
 from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-from versioning import get_ppo
+from legacy.versioning import get_ppo
 
 from environment import SeamCarvingEnv
 
