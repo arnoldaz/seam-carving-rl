@@ -27,7 +27,9 @@ class SeamCarvingEnv(gym.Env):
             original_image = cv2.imread(image, cv2.IMREAD_COLOR)
             self.image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
         else:
-            self.image = image
+            self.image = image.astype("uint8")
+
+        print(f"{self.image.dtype=}")
 
         self.scaled_image = cv2.resize(self.image, (self.OBSERVATION_WIDTH, self.OBSERVATION_HEIGHT), interpolation=cv2.INTER_AREA)
         self.image_height, self.image_width, _ = self.image.shape
@@ -137,8 +139,8 @@ class SeamCarvingEnv(gym.Env):
             None
         elif action == self.RIGHT:
             self.current_location += 1
-            if self.current_location > self.OBSERVATION_WIDTH - 1 - self.block_right_lines:
-                self.current_location = self.OBSERVATION_WIDTH - 1 - self.block_right_lines
+            if self.current_location > self.image_width - 1 - self.block_right_lines:
+                self.current_location = self.image_width - 1 - self.block_right_lines
                 reward -= 100
                 out_of_bounds = True
         else:

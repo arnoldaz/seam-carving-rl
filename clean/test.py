@@ -26,7 +26,8 @@ def main(args: argparse.Namespace):
 
     env = SeamCarvingEnv(args.input)
     obs = env.reset()
-    start_seam_locations = get_random_starting_points(env.image_width, 30, 123)
+    start_seam_locations = get_random_starting_points(env.image_width, 100, 123)
+    print(f"{start_seam_locations=}")
     done = False
 
     model = PPO.load(args.model)
@@ -46,7 +47,7 @@ def main(args: argparse.Namespace):
 
         image = env.image
         path = env.found_path
-        print(f"{i} {path=}")
+        # print(f"{i} {path=}")
         new_image = remove_seam(image, path)
         print(f"{i} {new_image.shape=}")
         final_image = add_empty_vertical_lines(new_image, 1)
@@ -61,7 +62,7 @@ def main(args: argparse.Namespace):
 
 
     recolored_image = cv2.cvtColor(np.float32(env.image), cv2.COLOR_BGR2RGB)
-    cropped_image = recolored_image[:,0:(env.WIDTH - len(start_seam_locations))]
+    cropped_image = recolored_image[:,0:(env.image_width - len(start_seam_locations))]
     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp1\\abc_FINAL.png", cropped_image)
 
     return
