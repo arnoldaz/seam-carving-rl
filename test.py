@@ -1,98 +1,106 @@
-import sys
-import gym
+import argparse
+import cv2
+from matplotlib import pyplot as plt
 import numpy as np
-from env import SeamCarvingEnv
-import matplotlib.pyplot as plt
+from stable_baselines3 import PPO
+from environment import SeamCarvingEnv
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
-# from stable_baselines.common.policies import MlpPolicy
-# from stable_baselines import PPO2
+from seam_carving import remove_seam, get_random_starting_points, add_empty_vertical_lines
+
+def test_dynamic_programming_seam_carving():
+    pass
+
+def test_rl_seam_carving():
+    pass
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Input image path")
+parser.add_argument("-r", "--rl-output", type=str, default="D:\\Source\\seam-carving\\images-out\\rl1.png", help="Output image path")
+parser.add_argument("-s", "--seam-carving-output", type=str, default="D:\\Source\\seam-carving\\images-out\\seamcarving1.png", help="Output image path")
+parser.add_argument("-m", "--model", type=str, default="0459574b_FINAL", help="PPO model path")
+
+def main(args: argparse.Namespace):
+    """Testing stuff"""
+
+    env = SeamCarvingEnv(args.input)
+    obs = env.reset()
+    start_seam_locations = get_random_starting_points(env.image_width, 100, 123)
+    print(f"{start_seam_locations=}")
+    done = False
+
+    model = PPO.load(args.model)
+
+    i = 0
+    for start_seam_location in start_seam_locations:
+        env.current_location = start_seam_location
+        env.found_path[0] = start_seam_location
+        print(f"{i} {start_seam_location=}")
+
+        rewards_sum = 0
+        while not done:
+            action, _states = model.predict(obs, deterministic=False)
+            obs, rewards, done, info = env.step(action)
+            rewards_sum += rewards
+        print(f"{i} {rewards_sum=}")
+
+        image = env.image
+        path = env.found_path
+        # print(f"{i} {path=}")
+        new_image = remove_seam(image, path)
+        print(f"{i} {new_image.shape=}")
+        final_image = add_empty_vertical_lines(new_image, 1)
+
+        out_image = cv2.cvtColor(np.float32(final_image), cv2.COLOR_BGR2RGB)
+        cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp1\\abc1_{i}.png", out_image)
+
+        i += 1
+        env = SeamCarvingEnv(final_image, block_right_lines=i)
+        obs = env.reset()
+        done = False
 
 
-TOTAL_TIMESTEPS = 5e6
+    recolored_image = cv2.cvtColor(np.float32(env.image), cv2.COLOR_BGR2RGB)
+    cropped_image = recolored_image[:,0:(env.image_width - len(start_seam_locations))]
+    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp1\\abc_FINAL.png", cropped_image)
 
-env = SeamCarvingEnv("./images/clocks.jpeg")
+    return
+    out_path = "../images-out/clocks-env-test9999.png"
+    env = SeamCarvingEnv("../images/clocks-fix.jpeg")
+    # env = make_vec_env(lambda: SeamCarvingEnv("../images/clocks-fix.jpeg"), n_envs=4, vec_env_cls=DummyVecEnv)  
+    obs = env.reset()
+    # dones = [False, False, False, False]
+    done = False
 
-# img_energy = env.img_energy
-_, img_energy = np.mgrid[0:500, 0:500]
-# print(grid)
+    # print(env.current_location)
+    env.current_location = 120
+    # print(env.current_location)
 
-line_count = len(img_energy)
-line_length = len(img_energy[0])
+    # print(env.energy_min)
+    # print(env.energy_max)
 
-print(line_count)
-print(line_length)
+    model = PPO.load("dfea11e4_8")
 
-current_location = 498
-current_line = 10
+    while not done:
+        action, _states = model.predict(obs, deterministic=False)
+        obs, rewards, done, info = env.step(action)
+        # env.render()
+        print(rewards)
 
-max_obs = np.full((line_count, 1), 256, dtype=np.int)
+    # image = env.render_image
 
-# a = np.arange(1, 900)
-# print(a[(current_location - 4):(current_location + 3)])
+    image = env.image
+    path = env.found_path
+    new_image = remove_seam(image, path)
+    print(f"{new_image=} {new_image.shape=}")
 
-low = current_location - 3
-high = current_location + 4
-
-min_location = max(low, 0)
-max_location = min(high, line_length)
-
-print("min")
-print(min_location)
-print(max_location)
-print("min")
-print(low)
-print(high)
+    env = SeamCarvingEnv(new_image)
 
 
-lines_data = img_energy[current_line:, min_location:max_location]
-print(lines_data.shape)
-print(lines_data)
 
-x_offset = -low if low < 0 else 0
+    cv2.imwrite(out_path, image)
 
-new = np.zeros((line_count, 7), dtype=np.int)
-new[ :lines_data.shape[0], x_offset : lines_data.shape[1] + x_offset] = lines_data
-
-# zero_obs = np.zeros(len(lines_data[0]), dtype=np.int)
-# while not len(lines_data) == line_count:
-#     lines_data = np.concatenate((lines_data, [zero_obs]))
-
-print(new.shape)
-print(new)
-
-# lines_data = np.reshape(lines_data, (line_count, 7))
-
-# np.pad(lines_data, )
-
-# while not len(lines_data[0]) == line_length:
-#     for index, line in enumerate(lines_data):
-#         print(lines_data[index])
-#         # lines_data[index] = np.concatenate(([256], line))
-#         lines_data[index] = np.insert(line, 0, 256)
-
-# print(lines_data.shape)
-# print(lines_data)
-
-# print(env.img_energy)
-# plt.imshow(env.img_energy)
-# plt.show()
-
-sys.exit()
-
-# model = PPO2(MlpPolicy, env, verbose=1)
-# model.learn(total_timesteps=int(TOTAL_TIMESTEPS))
-
-# model.save(f".out\\test_{TOTAL_TIMESTEPS}")
-
-# obs = env.reset()
-# done = False
-
-# while not done:
-#     action = env.action_space.sample()
-#     obs, reward, done, _  = env.step(action)
-
-# image = env.render_img
-# plt.imshow(image)
-# plt.show()
-
-# env.close()
+if __name__ == "__main__":
+    args = parser.parse_args()
+    main(args)

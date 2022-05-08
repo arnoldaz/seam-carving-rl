@@ -1,14 +1,7 @@
 import cv2
 import numpy as np
 
-def rgb_to_gray(rgb):
-    return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
-
-def calc_img_energy(image):
-    image = image.astype("float32")
-    energy = np.absolute(cv2.Sobel(image, -1, 1, 0)) + np.absolute(cv2.Sobel(image, -1, 0, 1))
-    energy_map = np.sum(energy, axis=2)
-    return energy_map
+from utils import calc_img_energy
 
 def calc_seam_cost_forward(energy_map):
     shape = m, n = energy_map.shape
@@ -116,33 +109,19 @@ def calc_seam_cost_forward(energy_map):
     return (e_map, backtrack)
 
 def main():
-    og_img = cv2.imread("../images/clocks-fix.jpeg", cv2.IMREAD_COLOR)
-    out_path = "../images-out/clocks-fix2.png"
+    og_img = cv2.imread("./images/clocks-fix.jpeg", cv2.IMREAD_COLOR)
+    out_path = "./images-out/clocks-fix2.png"
 
     img = np.copy(og_img)
-    # og_energy_map = calc_img_energy(img)
-    # print(og_energy_map.max())
-    # print(og_energy_map.min())
 
-    img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
     energy_map = calc_img_energy(img)
-
-    min_e = energy_map.min()
-    max_e = energy_map.max()
-
-    print(min_e, max_e)
-
-    energy_map[energy_map < (3000/100*50)] = 0
-    cv2.imwrite(out_path, energy_map)
-    return
-
-    # energy_map = cv2.resize(energy_map, (160, 120), interpolation=cv2.INTER_AREA)
+    img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
+    energy_map = cv2.resize(energy_map, (160, 120), interpolation=cv2.INTER_AREA)
     energy_map_forward, backtrack = calc_seam_cost_forward(energy_map)
     (min_seam, cost) = find_min_seam(energy_map_forward, backtrack)
-    print(energy_map.max())
-    print(energy_map.min())
+    print(min_seam)
     bgr_img_with_seam = draw_seam(img, min_seam)
-    # cv2.imwrite(out_path, bgr_img_with_seam)
+    cv2.imwrite(out_path, bgr_img_with_seam)
     img = remove_seam(img, min_seam)
 
 if __name__ == "__main__":

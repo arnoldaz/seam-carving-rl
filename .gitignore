@@ -6,11 +6,13 @@ __pycache__/
 agents-out-v2/
 tensorboard-out-v2/
 images-out/
-new/.out/
-new/.tensorboard/
+legacy/new/.out/
+legacy/new/.tensorboard/
 
 *.png
 *.jpeg
 
 *.agents
 *.tensorboard
+
+clean/
