@@ -12,9 +12,22 @@ def main():
     """Testing stuff"""
     out_path = "../images-out/clocks-env-test999.png"
 
-    env = SeamCarvingEnv("../images/4k-plane.jpeg")
+    image = cv2.imread("images/clocks-scaled.png", cv2.IMREAD_COLOR)
+    heigth, width, rgb = image.shape
 
-    print(time.process_time() - start)
+    half_width = width // 2
+    start_x = width + 50 - half_width
+    end_x = start_x + width
+    start_y = 20
+    end_y = start_y + heigth
+
+    empty_matrix = np.full((3, heigth * 2, width * 3), 0)
+    empty_matrix[:,0:heigth, width:(width * 2)] = image[:,0:heigth, 0:(width)]
+
+    end_image = empty_matrix[start_y:end_y, start_x:end_x]
+    plt.imshow(end_image)
+    plt.show()
+    # print(time.process_time() - start)
 
     return
 

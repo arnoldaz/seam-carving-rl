@@ -1,17 +1,18 @@
 import sys
 import cv2
 import gym
+from matplotlib import pyplot as plt
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
-from environment import SeamCarvingEnv
+from environment_experiment1 import SeamCarvingEnv
 
-env = SeamCarvingEnv("../images/clocks-fix.jpeg")
+env = SeamCarvingEnv("images/clocks-scaled.png")
 obs = env.reset()
 done = False
 
-env.current_location = 10
+env.current_location = 50
 
 # model = PPO.load("72af20d4_16")
 
@@ -22,5 +23,5 @@ while not done:
     env.render()
     print(rewards)
 
-
-cv2.imwrite("../images-out/ONE_LINE2.png", env.render_image)
+plt.imshow(env.render_img)
+plt.show()

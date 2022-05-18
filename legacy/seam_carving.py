@@ -109,7 +109,7 @@ def calc_seam_cost_forward(energy_map):
     return (e_map, backtrack)
 
 def main():
-    og_img = cv2.imread("./images/clocks-fix.jpeg", cv2.IMREAD_COLOR)
+    og_img = cv2.imread("./images/4k-plane.jpg", cv2.IMREAD_COLOR)
     out_path = "./images-out/clocks-fix2.png"
 
     img = np.copy(og_img)

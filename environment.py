@@ -1,3 +1,4 @@
+import uuid
 import gym
 from gym import spaces
 import cv2
@@ -21,7 +22,7 @@ class SeamCarvingEnv(gym.Env):
     OBSERVATION_WIDTH = 160
     OBSERVATION_HEIGHT = 120
 
-    def __init__(self, image: str | cv2.Mat, block_right_lines=0):
+    def __init__(self, image: str | cv2.Mat, block_right_lines=0, a=None):
         self.image = None
         if isinstance(image, str):
             original_image = cv2.imread(image, cv2.IMREAD_COLOR)
@@ -29,10 +30,11 @@ class SeamCarvingEnv(gym.Env):
         else:
             self.image = image.astype("uint8")
 
-        print(f"{self.image.dtype=}")
+        self.image_height, self.image_width, _ = self.image.shape
+        # self.OBSERVATION_WIDTH = self.image_width
+        # self.OBSERVATION_HEIGHT = self.image_height
 
         self.scaled_image = cv2.resize(self.image, (self.OBSERVATION_WIDTH, self.OBSERVATION_HEIGHT), interpolation=cv2.INTER_AREA)
-        self.image_height, self.image_width, _ = self.image.shape
         self.ratio_vertical = self.image_height / self.OBSERVATION_HEIGHT
         self.ratio_horizontal = self.image_width / self.OBSERVATION_WIDTH
         
@@ -47,10 +49,10 @@ class SeamCarvingEnv(gym.Env):
         self.scaled_energy_min = self.scaled_image_energy.min()
         self.scaled_energy_max = self.scaled_image_energy.max()
 
-        self.render_image = self.image[:]
-        self.render_image_object = None
-        self.render_initialized = False
-        self.path_line_color = [255, 255, 255] # White
+        # self.render_image = self.image[:]
+        # self.render_image_object = None
+        # self.render_initialized = False
+        # self.path_line_color = [255, 255, 255] # White
 
         self.current_line = 0
         self.current_location = random.randint(0, self.image_width - 2)
@@ -59,7 +61,7 @@ class SeamCarvingEnv(gym.Env):
         self.found_path[0] = self.current_location
 
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Box(low=0, high=255, shape=(3, self.OBSERVATION_HEIGHT, self.OBSERVATION_WIDTH), dtype=np.uint8)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(3, self.OBSERVATION_HEIGHT, self.OBSERVATION_WIDTH), dtype=np.float32)
 
         self.normalized_energy = np.interp(self.image_energy, (self.image_energy.min(), self.image_energy.max()), (0, 255))
         self.normalized_scaled_energy = np.interp(self.scaled_image_energy, (self.scaled_image_energy.min(), self.scaled_image_energy.max()), (0, 255))
@@ -72,6 +74,22 @@ class SeamCarvingEnv(gym.Env):
         self.normalized_energy_100 = np.where(self.normalized_energy < 100, 0, 255)
         self.normalized_scaled_energy_100 = np.where(self.normalized_scaled_energy < 100, 0, 255)
         self.observation_image_100 = self.fill_image_for_observations(self.normalized_scaled_energy_100)
+
+        # if a:
+        #     temp = str(uuid.uuid4())[:4]
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\image_{temp}.png", self.image)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\scaled_image_{temp}.png", self.scaled_image)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\image_energy_{temp}.png", self.image_energy)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\scaled_image_energy_{temp}.png", self.scaled_image_energy)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_energy_{temp}.png", self.normalized_energy)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_scaled_energy_{temp}.png", self.normalized_scaled_energy)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\observation_image_full_{temp}.png", self.observation_image_full)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_energy_50_{temp}.png", self.normalized_energy_50)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_scaled_energy_50_{temp}.png", self.normalized_scaled_energy_50)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\observation_image_50_{temp}.png", self.observation_image_50)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_energy_100_{temp}.png", self.normalized_energy_100)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_scaled_energy_100_{temp}.png", self.normalized_scaled_energy_100)
+        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\observation_image_100_{temp}.png", self.observation_image_100)
 
         # self.observation_energy_forward = self.fill_image_for_observations(self.image_energy_forward_interp)
 
@@ -89,9 +107,15 @@ class SeamCarvingEnv(gym.Env):
     def fill_image_for_observations(self, image):
         image_flipped_vertical = cv2.flip(image, 0)
         image_layer_vertical = np.concatenate((image, image_flipped_vertical), axis=0)
+        layer_height, layer_width = image_layer_vertical.shape
+        scaled_block_right_lines = int(self.block_right_lines // self.ratio_horizontal)
+        # print(f"ENV: {image_layer_vertical.shape=} {scaled_block_right_lines=}")
 
         empty_matrix = np.full((self.OBSERVATION_HEIGHT * 2, self.OBSERVATION_WIDTH * 3), 255)
-        empty_matrix[0:(self.OBSERVATION_HEIGHT * 2), self.OBSERVATION_WIDTH:(self.OBSERVATION_WIDTH * 2)] = image_layer_vertical
+        empty_matrix[0:(self.OBSERVATION_HEIGHT * 2), self.OBSERVATION_WIDTH:(self.OBSERVATION_WIDTH * 2 - scaled_block_right_lines)] = image_layer_vertical[0:layer_height, 0:(layer_width - scaled_block_right_lines)]
+
+        # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp2\\123abc.png", empty_matrix)
+        # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp2\\123abc2.png", image_layer_vertical[0:layer_height, 0:(layer_width - scaled_block_right_lines)])
 
         return empty_matrix
 
@@ -133,7 +157,7 @@ class SeamCarvingEnv(gym.Env):
             self.current_location -= 1
             if self.current_location < 0:
                 self.current_location = 0
-                reward -= 100 
+                reward -= 30 
                 out_of_bounds = True
         elif action == self.MIDDLE:
             None
@@ -141,14 +165,14 @@ class SeamCarvingEnv(gym.Env):
             self.current_location += 1
             if self.current_location > self.image_width - 1 - self.block_right_lines:
                 self.current_location = self.image_width - 1 - self.block_right_lines
-                reward -= 100
+                reward -= 30
                 out_of_bounds = True
         else:
             raise Exception("Only 3 actions are supported: LEFT, MIDDLE, RIGHT")
 
         if not out_of_bounds:
             energy_value = self.image_energy[self.current_line][self.current_location]
-            normalized_energy = 100 - np.interp(energy_value, (self.image_energy.min(), self.image_energy.max()), (0, 100))
+            normalized_energy = 100 - np.interp(energy_value, (self.energy_min, self.energy_max), (0, 100))
             reward += normalized_energy
 
             energy_value_50 = self.normalized_energy_50[self.current_line][self.current_location]
@@ -160,7 +184,7 @@ class SeamCarvingEnv(gym.Env):
                 reward -= 50
             
         self.found_path[self.current_line] = self.current_location
-        self.render_image[self.current_line][self.current_location] = self.path_line_color
+        # self.render_image[self.current_line][self.current_location] = self.path_line_color
 
         return self.get_observations(), reward, self.is_done(), {}
 
@@ -171,22 +195,22 @@ class SeamCarvingEnv(gym.Env):
         self.found_path = np.full(self.image_height, -1, dtype=int)
         self.found_path[0] = self.current_location
 
-        self.render_image = self.image[:]
-        self.render_image_object = None
-        self.render_initialized = False
+        # self.render_image = self.image[:]
+        # self.render_image_object = None
+        # self.render_initialized = False
 
         return self.get_observations()
 
-    def render(self, mode="human"):
-        if not mode == "human":
-            raise NotImplementedError("Only human rendering is available")
+    # def render(self, mode="human"):
+    #     if not mode == "human":
+    #         raise NotImplementedError("Only human rendering is available")
 
-        if not self.render_initialized:
-            self.render_image_object = plt.imshow(self.get_observations()[0])
-        else:
-            self.render_image_object.set_data(self.get_observations()[0])
+    #     if not self.render_initialized:
+    #         self.render_image_object = plt.imshow(self.get_observations()[0])
+    #     else:
+    #         self.render_image_object.set_data(self.get_observations()[0])
 
-        plt.pause(0.01)
+    #     plt.pause(0.01)
 
 
 
@@ -194,10 +218,14 @@ def main():
     """Testing stuff"""
 
     out_path = "../images-out/clocks-env-test1.png"
-    env = SeamCarvingEnv("../images/clocks-fix.jpeg")
+    env = SeamCarvingEnv("images/clocks-scaled.png")
 
-    image = env.observation_image_full
-    cv2.imwrite(out_path, image)
+    image1 = env.normalized_energy
+    image2 = env.normalized_energy_50
+    image3 = env.normalized_energy_100
+    cv2.imwrite("images-out\\image1.png", image1)
+    cv2.imwrite("images-out\\image2.png", image2)
+    cv2.imwrite("images-out\\image3.png", image3)
 
 if __name__ == "__main__":
    main()

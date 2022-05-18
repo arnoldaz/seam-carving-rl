@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import argparse
 import random
+import time
+
 
 def rgb_to_gray(rgb):
     return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
@@ -59,6 +61,22 @@ def draw_seam(image, seam):
     blue[rows, seam] = 0
     green[rows, seam] = 0
     red[rows, seam] = 255
+    img_with_seam = np.zeros((blue.shape[0], blue.shape[1], 3))
+    img_with_seam[:,:,0] = blue
+    img_with_seam[:,:,1] = green
+    img_with_seam[:,:,2] = red
+    return img_with_seam
+
+def draw_fat_seam(image, seam):
+    rows = np.arange(0, seam.shape[0], 1)
+    blue, green, red = cv2.split(image)
+    for i in [seam-1, seam, seam+1]:
+        try:
+            blue[rows, i] = 0
+            green[rows, i] = 0
+            red[rows, i] = 255
+        except:
+            pass
     img_with_seam = np.zeros((blue.shape[0], blue.shape[1], 3))
     img_with_seam[:,:,0] = blue
     img_with_seam[:,:,1] = green
@@ -194,31 +212,65 @@ def add_empty_vertical_lines(img: cv2.Mat, line_count: int) -> cv2.Mat:
     
     return new_img
 
+def seam_carve_lines(img: cv2.Mat, line_count: int) -> cv2.Mat:
+    new_img = np.copy(img)
+    for i in range(line_count):
+        energy_map = calc_img_energy(new_img)
+        energy_map_forward, backtrack = calc_seam_cost_forward(energy_map)
+        (min_seam, cost) = find_min_seam(energy_map_forward, backtrack)
+        new_img = remove_seam(new_img, min_seam)
+
+
+    return new_img
+
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\clocks-fix.jpeg", help="Input image path")
+parser.add_argument("-i", "--input", type=str, default="D:\\Source\\seam-carving\\images\\4k.jpg", help="Input image path")
 parser.add_argument("-o", "--output", type=str, default="D:\\Source\\seam-carving\\images-out\\2.png", help="Output image path")
 parser.add_argument("-l", "--location", type=int, default=80, help="Starting location for seam")
 
 def main(args: argparse.Namespace):
     """Main function for testing seam calculation."""
     out_path = args.output
-    img = cv2.imread(args.input, cv2.IMREAD_COLOR)
 
-    a = calc_img_energy(img)
-    a_r = cv2.resize(a, (160, 120), interpolation=cv2.INTER_AREA)
-    a_n = np.interp(a_r, (a_r.min(), a_r.max()), (0, 255))
+    start = time.time()
 
-    img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
-    b = calc_img_energy(img)
-    b_n = np.interp(b, (b.min(), b.max()), (0, 255))
+    og_img = cv2.imread(args.input, cv2.IMREAD_COLOR)
+    img = np.copy(og_img)
+    energy_map = calc_img_energy(img)
+    energy_map_forward, backtrack = calc_seam_cost_forward(energy_map)
+    (min_seam, cost) = find_min_seam(energy_map_forward, backtrack)
 
-    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\a.png", a)
-    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\ar.png", a_r)
-    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\b.png", b)
-    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\an.png", a_n)
-    cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\bn.png", b_n)
+    print(time.time() - start)
 
-    return
+    bgr_img_with_seam = draw_seam(img, min_seam)
+    cv2.imwrite("D:\\Source\\seam-carving\\images-out\\xxxxxxy.png", bgr_img_with_seam)
+    # cv2.imwrite(out_path, bgr_img_with_seam)
+    # img = remove_seam(img, min_seam)
+
+
+    # image = get_image_with_seam(img, 800)
+
+    # new_img = seam_carve_lines(img, 300)
+    # energy = calc_img_energy(img)
+    # energy = np.interp(energy_map, (energy_map.min(), energy_map.max()), (0, 255))
+    # energy_map_forward, backtrack = calc_seam_cost_forward(energy)
+    # energy_map_forward = np.interp(energy_map_forward, (energy_map_forward.min(), energy_map_forward.max()), (0, 255))
+    return 
+    # a = calc_img_energy(img)
+    # a_r = cv2.resize(a, (160, 120), interpolation=cv2.INTER_AREA)
+    # a_n = np.interp(a_r, (a_r.min(), a_r.max()), (0, 255))
+
+    # img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
+    # b = calc_img_energy(img)
+    # b_n = np.interp(b, (b.min(), b.max()), (0, 255))
+
+    # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\a.png", a)
+    # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\ar.png", a_r)
+    # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\b.png", b)
+    # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\an.png", a_n)
+    # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\TEST1\\bn.png", b_n)
+
+    # return
 
     # out_image = cv2.cvtColor(np.float32(img), cv2.COLOR_BGR2RGB)
     # cv2.imwrite(f"D:\\Source\\seam-carving\\images\\clocks-scaled.png", img)
