@@ -31,13 +31,11 @@ class SeamCarvingEnv(gym.Env):
             self.image = image.astype("uint8")
 
         self.image_height, self.image_width, _ = self.image.shape
-        # self.OBSERVATION_WIDTH = self.image_width
-        # self.OBSERVATION_HEIGHT = self.image_height
 
         self.scaled_image = cv2.resize(self.image, (self.OBSERVATION_WIDTH, self.OBSERVATION_HEIGHT), interpolation=cv2.INTER_AREA)
         self.ratio_vertical = self.image_height / self.OBSERVATION_HEIGHT
         self.ratio_horizontal = self.image_width / self.OBSERVATION_WIDTH
-        
+
         self.block_right_lines = block_right_lines
 
         self.image_energy = calc_img_energy(self.image)
@@ -75,24 +73,7 @@ class SeamCarvingEnv(gym.Env):
         self.normalized_scaled_energy_100 = np.where(self.normalized_scaled_energy < 100, 0, 255)
         self.observation_image_100 = self.fill_image_for_observations(self.normalized_scaled_energy_100)
 
-        # if a:
-        #     temp = str(uuid.uuid4())[:4]
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\image_{temp}.png", self.image)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\scaled_image_{temp}.png", self.scaled_image)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\image_energy_{temp}.png", self.image_energy)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\scaled_image_energy_{temp}.png", self.scaled_image_energy)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_energy_{temp}.png", self.normalized_energy)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_scaled_energy_{temp}.png", self.normalized_scaled_energy)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\observation_image_full_{temp}.png", self.observation_image_full)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_energy_50_{temp}.png", self.normalized_energy_50)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_scaled_energy_50_{temp}.png", self.normalized_scaled_energy_50)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\observation_image_50_{temp}.png", self.observation_image_50)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_energy_100_{temp}.png", self.normalized_energy_100)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\normalized_scaled_energy_100_{temp}.png", self.normalized_scaled_energy_100)
-        #     cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp4\\observation_image_100_{temp}.png", self.observation_image_100)
-
-        # self.observation_energy_forward = self.fill_image_for_observations(self.image_energy_forward_interp)
-
+    # Not used anymore
     def modify_image_for_observations(self, image):
         """Returns 3x2 matrix of original image with clone images flipped."""
         image_flipped_vertical = cv2.flip(image, 0)
@@ -109,19 +90,14 @@ class SeamCarvingEnv(gym.Env):
         image_layer_vertical = np.concatenate((image, image_flipped_vertical), axis=0)
         layer_height, layer_width = image_layer_vertical.shape
         scaled_block_right_lines = int(self.block_right_lines // self.ratio_horizontal)
-        # print(f"ENV: {image_layer_vertical.shape=} {scaled_block_right_lines=}")
 
         empty_matrix = np.full((self.OBSERVATION_HEIGHT * 2, self.OBSERVATION_WIDTH * 3), 255)
         empty_matrix[0:(self.OBSERVATION_HEIGHT * 2), self.OBSERVATION_WIDTH:(self.OBSERVATION_WIDTH * 2 - scaled_block_right_lines)] = image_layer_vertical[0:layer_height, 0:(layer_width - scaled_block_right_lines)]
-
-        # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp2\\123abc.png", empty_matrix)
-        # cv2.imwrite(f"D:\\Source\\seam-carving\\images-out\\temp2\\123abc2.png", image_layer_vertical[0:layer_height, 0:(layer_width - scaled_block_right_lines)])
 
         return empty_matrix
 
     def is_done(self):
         """Returns true if episode is done."""
-        # print(f"{self.current_line=} {self.image_height=}")
         return self.current_line >= self.image_height - 1
 
     def get_observations_for_image(self, image):
@@ -132,15 +108,12 @@ class SeamCarvingEnv(gym.Env):
         start_y = int(self.current_line // self.ratio_vertical)
         end_y = start_y + self.OBSERVATION_HEIGHT
     
-        # print(f"{half_width=} {start_x=} {end_x=} {start_y=} {end_y=}")
-
         return image[start_y:end_y, start_x:end_x]
 
     def get_observations(self):
         observation_full = self.get_observations_for_image(self.observation_image_full)
         observation_50 = self.get_observations_for_image(self.observation_image_50)
         observation_100 = self.get_observations_for_image(self.observation_image_100)
-        # observation_forward = self.get_observations_for_image(self.observation_energy_forward)
 
         return np.array([observation_full, observation_50, observation_100])
 
@@ -215,14 +188,13 @@ class SeamCarvingEnv(gym.Env):
 
 
 def main():
-    """Testing stuff"""
+    """Testing environment related stuff"""
 
-    out_path = "../images-out/clocks-env-test1.png"
-    env = SeamCarvingEnv("images/clocks-scaled.png")
+    env = SeamCarvingEnv("images/eiffel.jpg")
 
-    image1 = env.normalized_energy
-    image2 = env.normalized_energy_50
-    image3 = env.normalized_energy_100
+    image1 = env.normalized_scaled_energy
+    image2 = env.normalized_scaled_energy_50
+    image3 = env.normalized_scaled_energy_100
     cv2.imwrite("images-out\\image1.png", image1)
     cv2.imwrite("images-out\\image2.png", image2)
     cv2.imwrite("images-out\\image3.png", image3)

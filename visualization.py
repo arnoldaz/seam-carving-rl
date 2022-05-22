@@ -11,8 +11,8 @@ from scipy.special import softmax
 out_folder = Path("images-out") / "visual"
 out_folder.mkdir(parents=True, exist_ok=True)
 
-# input = "images\\Broadway_tower_edit.jpg"
 input = "images\\clocks-scaled.png"
+# input = "images\\Broadway_tower_edit.jpg"
 # input = "images\\4k-plane.jpg"
 
 def save_image(image: cv2.Mat, name: str):
@@ -20,10 +20,7 @@ def save_image(image: cv2.Mat, name: str):
     cv2.imwrite(path, image)
 
 def main():
-    # image = cv2.imread(input, cv2.IMREAD_COLOR)
-    # scaled_image = cv2.resize(image, (160, 120), interpolation=cv2.INTER_AREA)
-    # save_image(scaled_image, "scaled_image_og")
-    # return
+    """Helper file for creating visualizations."""
 
     image = cv2.imread(input, cv2.IMREAD_COLOR)
     save_image(image, "image_og")
@@ -45,8 +42,9 @@ def main():
 
     energy_softmax_norm = np.interp(energy_softmax, (0, 1), (0, 255))
     save_image(energy_softmax_norm, "energy_softmax")
-    # np.savetxt("images-out\\visual\\file.txt", energy_softmax, fmt='%.2f')
-    # np.savetxt("images-out\\visual\\file1.txt", energy_softmax_norm, fmt='%d')
+
+    # np.savetxt("images-out\\visual\\file.txt", energy_softmax, fmt="%.2f")
+    # np.savetxt("images-out\\visual\\file1.txt", energy_softmax_norm, fmt="%d")
 
 if __name__ == "__main__":
     main()

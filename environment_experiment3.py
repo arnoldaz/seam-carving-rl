@@ -9,6 +9,7 @@ import sys
 from seam_carving import calc_img_energy 
 
 class SeamCarvingEnv(gym.Env):
+    """Downgraded seam carving environment for experiment 3."""
 
     # Available actions
     LEFT = 0
@@ -99,14 +100,6 @@ class SeamCarvingEnv(gym.Env):
             energy_value = self.image_energy[self.current_line][self.current_location]
             normalized_energy = 100 - np.interp(energy_value, (self.energy_min, self.energy_max), (0, 100))
             reward += normalized_energy
-
-            # energy_value_50 = self.normalized_energy_50[self.current_line][self.current_location]
-            # if energy_value_50 == 255:
-            #     reward -= 30
-
-            # energy_value_100 = self.normalized_energy_100[self.current_line][self.current_location]
-            # if energy_value_100 == 255:
-            #     reward -= 50
 
         self.found_path[self.current_line] = self.current_location
         # self.render_img[self.current_line][self.current_location] = self.line_color

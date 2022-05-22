@@ -14,10 +14,7 @@ done = False
 
 env.current_location = 50
 
-# model = PPO.load("72af20d4_16")
-
 while not done:
-    # action, _states = model.predict(obs, deterministic=False)
     action = env.action_space.sample()
     obs, rewards, done, info = env.step(action)
     env.render()

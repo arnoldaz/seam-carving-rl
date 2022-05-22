@@ -6,7 +6,6 @@ import time
 from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-from legacy.versioning import get_ppo
 
 from environment import SeamCarvingEnv
 
@@ -66,9 +65,12 @@ def train_model(model: PPO | A2C | DQN, steps, save_period, name):
 def main(args: argparse.Namespace):
     print(f"Passed params: {args.algorithm=} {args.image=} {args.n_env=} {args.vec_env=} {args.steps=} {args.period=} {args.name=}")
 
-    # model = create_model(args.algorithm, args.image, args.n_env, args.vec_env, args.name)
-    env = make_vec_env(lambda: SeamCarvingEnv(args.image), n_envs=args.n_env, vec_env_cls=SubprocVecEnv if args.vec_env else DummyVecEnv)
-    model = PPO.load(".agents-exp\\balloons-scaled_ac688813_4", env)
+    model = create_model(args.algorithm, args.image, args.n_env, args.vec_env, args.name)
+
+    # Uncomment to load specific agent to continue training 
+    # env = make_vec_env(lambda: SeamCarvingEnv(args.image), n_envs=args.n_env, vec_env_cls=SubprocVecEnv if args.vec_env else DummyVecEnv)
+    # model = PPO.load(".agents-exp\\3d98e8a2_43.zip", env)
+
     train_model(model, args.steps, args.period, args.name)
     return
 

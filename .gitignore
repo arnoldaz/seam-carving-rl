@@ -13,6 +13,7 @@ legacy/new/.tensorboard/
 *.jpeg
 
 *.agents
+*.agents-exp
 *.tensorboard
 
 clean/

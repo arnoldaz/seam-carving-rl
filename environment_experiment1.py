@@ -9,6 +9,8 @@ import sys
 from seam_carving import calc_img_energy 
 
 class SeamCarvingEnv(gym.Env):
+    """Downgraded seam carving environment for experiment 1."""
+
     def __init__(self, img_path: str):
         self.img = cv2.imread(img_path, cv2.IMREAD_COLOR)
         self.img_energy = calc_img_energy(self.img)
